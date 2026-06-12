@@ -12,7 +12,11 @@ st.set_page_config(page_title="AI 程式導師系統", layout="wide", page_icon=
 
 # 側邊欄：設定 API Key
 st.sidebar.title("⚙️ 系統設定")
+<<<<<<< HEAD
+api_key = st.sidebar.text_input("請輸入 Google Gemini API Key:", type="here")
+=======
 api_key = st.sidebar.text_input("請輸入 Google Gemini API Key:", type="password")
+>>>>>>> parent of 0f444de (Update test.py)
 st.sidebar.markdown("👉 [按此免費獲取 Gemini API Key](https://aistudio.google.com/)")
 
 st.title("🎓 Verifier-in-the-Loop: 零幻覺 AI 程式導師")
@@ -121,7 +125,7 @@ if run_btn:
                     final_hint = ""
                     
                     for attempt in range(1, max_retries + 1):
-                        st.write(f"🔄 [嘗試 {attempt}/{maxRetries}] 正在生成提示與影子代碼...")
+                        st.write(f"🔄 [嘗試 {attempt}/{max_retries}] 正在生成提示與影子代碼...")
                         
                         try:
                             # 呼叫 LLM
