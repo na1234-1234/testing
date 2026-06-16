@@ -9,18 +9,13 @@ import requests
 # ==========================================
 # 1. 頁面與 UI 初始化設定
 # ==========================================
-st.set_page_config(page_title="AI 程式導師系統", layout="wide", page_icon="🎓")
+st.set_page_config(page_title="AI ", layout="wide", page_icon="🎓")
 
 # 側邊欄：設定 API Key
 st.sidebar.title("⚙️ 系統設定")
 
-api_key = "AQ.Ab8RN6JIotxu8M0MMtrYmTyJHegtqmvnMIZQP6SgIAsBSyMuaQ"
-#st.sidebar.text_input("請輸入 Google Gemini API Key:", type="password")
 
-st.sidebar.markdown("👉 [按此免費獲取 Gemini API Key](https://aistudio.google.com/)")
-
-st.title("🎓 Verifier-in-the-Loop: 零幻覺 AI 程式導師")
-st.markdown("本系統透過「影子代碼驗證」與「語法攔截」，確保 AI 導師只給出概念性提示 (Hints)，絕不直接提供代碼答案。")
+st.title("🎓 Verifier-in-the-Loop")
 st.markdown("---")
 
 # ==========================================
@@ -100,35 +95,28 @@ def call_gemini_llm(student_code, error_log):
 
     #genai.configure(api_key=api_key)
     #model = genai.GenerativeModel('gemini-2.5-flash-lite')
-    url = "http://localhost:11434/api/generate"
-    payload = {
-        "model": "qwen2.5:3b",
-        "prompt": prompt,
-        "format": "json",
-        "stream": False
-    }
+    #url = "http://localhost:11434/api/generate"
+    #url = "https://hermes.ai.unturf.com/v1/chat/completions"
+    client = OpenAI(
+        base_url="https://hermes.ai.unturf.com/v1",
+        api_key="anything"
+    )
+    
     try:
-        response = requests.post(url, json=payload)
-        response.raise_for_status()
-        
-        data = response.json()
-        raw_response = data.get('response', '')
-        
-        # 修正點 2：Ollama 透過 /api/generate 回傳的 response 通常已經是 JSON 字串
-        # 如果 raw_response 是空的，代表模型未準備好
-        if not raw_response:
-            st.error("⚠️ AI 模型尚未準備好，請稍候重試。")
-            return None
-            
-        st.write(f"DEBUG: 原始回應 -> {raw_response}")
-        
-        # 將字串解析為 Python 字典
-        return json.loads(raw_response)
-            
+        completion = client.chat.completions.create(
+            model="hermes",
+            messages=[
+                {"role": "system", "content": "You are a programming tutor. Output ONLY JSON: {'shadow_code': '...', 'hint': '...'}"},
+                {"role": "user", "content": f"Student Code: {student_code}\nError: {error_log}"}
+            ]
+        )
+        raw_response = "no"
+        raw_response = completion.choices[0].message.content
+        # 這裡再進行 JSON 解析...
+        return json.loads(raw_response.replace("```json", "").replace("```", "").strip())
     except Exception as e:
-        st.error(f"⚠️ 連接或解析失敗: {str(e)}")
+        st.error(f"❌ 官方庫連線失敗: {str(e)}")
         return None
-
 
    # response = model.generate_content(
    #     prompt,
@@ -157,9 +145,7 @@ with col2:
 # 4. 點擊按鈕後的主邏輯 (Verification Loop)
 # ==========================================
 if run_btn:
-    if not api_key:
-        st.error("⚠️ 請先在左側邊欄輸入 Gemini API Key！")
-    elif not student_code.strip():
+    if not student_code.strip():
         st.warning("⚠️ 請先輸入程式碼！")
     else:
         with feedback_placeholder:
